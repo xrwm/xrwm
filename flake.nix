@@ -20,12 +20,9 @@
 
           nativeBuildInputs = with pkgs; [
             pkg-config
-            wayland-scanner
             zig
-
             libxkbcommon
             pixman
-            udev
             wayland
             wayland-protocols
             wayland-scanner
@@ -33,14 +30,15 @@
           ];
 
           buildInputs = with pkgs; [
-            libxkbcommon
-            pixman
-            udev
-            wayland
-            wayland-protocols
-            wayland-scanner
-            wlroots
           ];
+
+          embedded-compositor-host = pkgs.writeShellApplication {
+            name = "embedded-compositor-host";
+            runtimeInputs = with pkgs; [ kwin ];
+            text = ''
+              kwin_wayland --xwayland --socket wayland-1 --width 1280 --height 720 2> /dev/null
+            '';
+          };
 
           packageName = "xrwm";
 
@@ -50,18 +48,12 @@
           packages."xrwm" = pkgs.stdenv.mkDerivation {
             pname = "xrwm";
             version = "0.0.1";
-            # src = ./.;
-            # src = builtins.fetchGit {
-            #   url = ./.;
-            #   submodules = true;
-            # };
-            src = self;
+            src = ./.;
 
             nativeBuildInputs = nativeBuildInputs;
             buildInputs = buildInputs;
 
             dontInstall = true;
-
             buildPhase = ''
               runHook preBuild
 
@@ -75,33 +67,16 @@
 
           devShells.dev = pkgs.mkShell {
             packages = with pkgs; [
-              clang
-              clang-tools
-              cppcheck
-
               rnix-lsp
               zls
 
-              pkg-config
-              zig
-              wayland
-              wayland-protocols
-              wayland-scanner
-              wlroots
-              pixman
-
               kwin
-            ];
+              embedded-compositor-host
+            ] ++ nativeBuildInputs ++ buildInputs;
 
             shellHook = ''
               [ $STARSHIP_SHELL ] && exec $STARSHIP_SHELL
             '';
-
-            LD_LIBRARY_PATH =
-              let
-                libs = with pkgs; [ wayland wlroots ];
-              in
-              nixpkgs.lib.strings.makeLibraryPath libs;
 
             CURRENT_PROJECT = packageName;
           };
