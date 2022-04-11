@@ -70,7 +70,6 @@
               rnix-lsp
               zls
 
-              kwin
               embedded-compositor-host
             ] ++ nativeBuildInputs ++ buildInputs;
 
