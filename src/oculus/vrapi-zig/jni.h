@@ -1,0 +1,1 @@
+/nix/store/k4klfav0z0a09b711cqzbrcg6hyp94p8-android-sdk-env/share/android-sdk/ndk/21.4.7075529/sysroot/usr/include/jni.h

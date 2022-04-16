@@ -5,9 +5,14 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     flake-compat = { url = "github:edolstra/flake-compat"; flake = false; };
+
+    android-nixpkgs = {
+      url = "github:tadfisher/android-nixpkgs/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
+  outputs = { self, nixpkgs, flake-utils, android-nixpkgs, ... }@inputs:
     flake-utils.lib.eachSystem
       (with flake-utils.lib.system; [
         x86_64-linux
@@ -18,15 +23,26 @@
             inherit system;
           };
 
+          android-sdk = android-nixpkgs.sdk.${system} (sdkPkgs: with sdkPkgs; [
+            cmdline-tools-latest
+            build-tools-29-0-3
+            platforms-android-29
+            ndk-21-4-7075529
+          ]);
+
           nativeBuildInputs = with pkgs; [
-            pkg-config
             zig
+            pkg-config
+
             libxkbcommon
             pixman
             wayland
             wayland-protocols
             wayland-scanner
             wlroots
+
+            android-sdk
+            jdk11
           ];
 
           buildInputs = with pkgs; [
