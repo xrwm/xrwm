@@ -7,13 +7,13 @@ const ScanProtocolsStep = @import("src/zig-wayland/build.zig").ScanProtocolsStep
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
 
-    // const scanner = ScanProtocolsStep.create(b);
-    // scanner.addSystemProtocol("stable/xdg-shell/xdg-shell.xml");
+    const scanner = ScanProtocolsStep.create(b);
+    scanner.addSystemProtocol("stable/xdg-shell/xdg-shell.xml");
 
-    // const wayland = Pkg{
-    //     .name = "wayland",
-    //     .path = .{ .generated = &scanner.result },
-    // };
+    const wayland = Pkg{
+        .name = "wayland",
+        .path = .{ .generated = &scanner.result },
+    };
     // const xkbcommon = Pkg{
     //     .name = "xkbcommon",
     //     .path = .{ .path = "src/zig-xkbcommon/src/xkbcommon.zig" },
@@ -63,9 +63,31 @@ pub fn build(b: *Builder) void {
     for (oculus_app.libraries) |exe| {
         exe.addPackage(oculus_app.getAndroidPackage("android"));
 
+        // exe.addLibPath("src/oculus/vr-api/Libs/Android/arm64-v8a/Debug");
+        // exe.addIncludeDir("src/oculus/vr-api/Include");
+        // exe.linkSystemLibrary("vrapi");
+
         exe.addLibPath("src/oculus/vr-api/Libs/Android/arm64-v8a/Debug");
-        exe.addIncludeDir("src/oculus/vr-api/Include");
-        exe.linkSystemLibrary("vrapi");
+        exe.linkSystemLibraryName("vrapi");
+
+        exe.linkLibC();
+        exe.addPackage(wayland);
+        exe.addObjectFile("libwayland/install/lib/libwayland-server.a");
+        exe.addObjectFile("libffi/prefix/lib/libffi.a");
+
+        // exe.addLibPath("lib/arm64-v8a");
+        // exe.linkSystemLibraryName("wayland-server");
+        // exe.setLinkerScriptPath(.{ .path = "LINKER" });
+        exe.step.dependOn(&scanner.step);
+        // TODO: remove when https://github.com/ziglang/zig/issues/131 is implemented
+        scanner.addCSource(exe);
+
+        // exe.addPackage(xkbcommon);
+        // exe.linkSystemLibrary("xkbcommon");
+
+        // exe.addPackage(wlroots);
+        // exe.linkSystemLibrary("wlroots");
+        // exe.linkSystemLibrary("pixman-1");
     }
 
     b.getInstallStep().dependOn(oculus_app.final_step);

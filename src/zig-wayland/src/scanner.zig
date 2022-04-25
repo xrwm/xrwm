@@ -18,6 +18,9 @@ pub fn scan(root_dir: fs.Dir, out_dir: fs.Dir, wayland_xml: []const u8, protocol
 
     var scanner = Scanner{};
 
+    std.log.info("root_dir:    {s}", .{root_dir});
+    std.log.info("out_dir:     {s}", .{out_dir});
+    std.log.info("wayland_xml: {s}", .{wayland_xml});
     try scanner.scanProtocol(root_dir, out_dir, wayland_xml);
     for (protocols) |xml_path|
         try scanner.scanProtocol(root_dir, out_dir, xml_path);

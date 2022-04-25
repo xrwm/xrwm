@@ -23,6 +23,24 @@
             inherit system;
           };
 
+          aarch64-pkgs = import nixpkgs {
+            system = "aarch64-linux";
+            # system = "x86_64-linux";
+            crossSystem = {
+              config = "aarch64-unknown-linux-android";
+            };
+          };
+
+          my-pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              (self: super: {
+                nativeBuildInputs = [ pkgs.zlib ];
+                buildInputs = [ pkgs.zlib ];
+              })
+            ];
+          };
+
           android-sdk = android-nixpkgs.sdk.${system} (sdkPkgs: with sdkPkgs; [
             cmdline-tools-latest
             build-tools-29-0-3
@@ -40,6 +58,14 @@
             wayland-protocols
             wayland-scanner
             wlroots
+
+            # aarch64-pkgs.libxkbcommon
+            # aarch64-pkgs.pixman
+            # aarch64-pkgs.wlroots
+            # pkgsCross.riscv64.wayland
+            # pkgsCross.aarch64-android.libffi
+            # wayland-protocols
+            # wayland-scanner
 
             android-sdk
             jdk11
@@ -92,6 +118,8 @@
             shellHook = ''
               [ $STARSHIP_SHELL ] && exec $STARSHIP_SHELL
             '';
+
+            # AARCH_LIBC = "${aarch64-pkgs.glibc}/lib";
 
             CURRENT_PROJECT = packageName;
           };

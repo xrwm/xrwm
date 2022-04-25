@@ -615,6 +615,8 @@ pub fn compileAppLibrary(
     exe.setTarget(config.target);
     exe.addLibPath(lib_dir);
     exe.addIncludeDir(std.fs.path.resolve(sdk.b.allocator, &[_][]const u8{ include_dir, config.include_dir }) catch unreachable);
+    // exe.addRPath("/system/lib64");
+    // exe.addRPath("/system/lib");
 
     exe.setLibCFile(sdk.createLibCFile(config.out_dir, include_dir, include_dir, lib_dir) catch unreachable);
     exe.libc_file.?.addStepDependencies(&exe.step);

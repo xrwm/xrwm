@@ -10,6 +10,10 @@ const JNI = android.JNI;
 const c = android.egl.c;
 const vrapi = @import("vrapi-zig/vrapi.zig");
 
+const wl = @import("wayland").server.wl;
+// const wlr = @import("wlroots");
+// const xkb = @import("xkb");
+
 const app_log = std.log.scoped(.app);
 
 /// Entry point for our application.
@@ -94,6 +98,13 @@ pub const AndroidApp = struct {
         const suggestedEyeTextureWidth: c_int = vrapi.vrapi_GetSystemPropertyInt(&self.ovrJava, vrapi.VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH);
         const suggestedEyeTextureHeight: c_int = vrapi.vrapi_GetSystemPropertyInt(&self.ovrJava, vrapi.VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT);
         std.log.info("Suggested Eye Texture {}x{}", .{ suggestedEyeTextureWidth, suggestedEyeTextureHeight });
+
+        // wlr.log.init(.debug);
+        const wl_server = try wl.Server.create();
+        // const backend = try wlr.Backend.autocreate(wl_server);
+        // _ = backend;
+        _ = wl_server;
+        std.log.info("created wl_server 0x{x}", .{ @ptrToInt(wl_server) });
 
         self.thread = try std.Thread.spawn(.{}, mainLoop, .{self});
     }

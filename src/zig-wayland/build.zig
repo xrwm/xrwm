@@ -102,6 +102,7 @@ pub const ScanProtocolsStep = struct {
             &[_][]const u8{ "pkg-config", "--variable=pkgdatadir", "wayland-scanner" },
         ), &std.ascii.spaces);
         const wayland_xml = try fs.path.join(ally, &[_][]const u8{ wayland_dir, "wayland.xml" });
+        std.log.info("wayland_dir: {s}", .{wayland_dir});
 
         const out_path = try fs.path.join(ally, &[_][]const u8{ self.builder.cache_root, "zig-wayland" });
 
@@ -114,9 +115,10 @@ pub const ScanProtocolsStep = struct {
         // Once https://github.com/ziglang/zig/issues/131 is implemented
         // we can stop generating/linking C code.
         for (self.protocol_paths.items) |path| {
-            _ = try self.builder.exec(
-                &[_][]const u8{ "wayland-scanner", "private-code", path, self.getCodePath(path) },
-            );
+            std.log.info("wayland-scanner private-code {s} {s}", .{ path, self.getCodePath(path) });
+            // _ = try self.builder.exec(
+            //     &[_][]const u8{ "wayland-scanner", "private-code", path, self.getCodePath(path) },
+            // );
         }
 
         self.result.path = try fs.path.join(ally, &[_][]const u8{ out_path, "wayland.zig" });
