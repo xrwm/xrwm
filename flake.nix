@@ -52,12 +52,12 @@
             zig
             pkg-config
 
-            libxkbcommon
-            pixman
-            wayland
+            # libxkbcommon
+            # pixman
+            # wayland
             wayland-protocols
             wayland-scanner
-            wlroots
+            # wlroots
 
             # aarch64-pkgs.libxkbcommon
             # aarch64-pkgs.pixman
@@ -69,6 +69,11 @@
 
             android-sdk
             jdk11
+          
+            meson
+            ninja
+            expat
+            libxml2
           ];
 
           buildInputs = with pkgs; [
