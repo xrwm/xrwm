@@ -1,8 +1,8 @@
 const std = @import("std");
 const Builder = std.build.Builder;
 const Pkg = std.build.Pkg;
-const Sdk = @import("src/oculus/sdk.zig");
-const ScanProtocolsStep = @import("src/zig-wayland/build.zig").ScanProtocolsStep;
+const Sdk = @import("oculus/sdk.zig");
+const ScanProtocolsStep = @import("wayland/vendor-zig-wayland/build.zig").ScanProtocolsStep;
 
 pub fn build(b: *Builder) void {
     const mode = b.standardReleaseOptions();
@@ -53,7 +53,7 @@ pub fn build(b: *Builder) void {
         .permissions = &[_][]const u8{},
     };
 
-    const oculus_app = sdk.createApp("xrwm.apk", "src/oculus/oculus.zig", config, mode, .{
+    const oculus_app = sdk.createApp("xrwm.apk", "oculus/oculus.zig", config, mode, .{
         .aarch64 = b.option(bool, "aarch64", "Enable the aarch64 build") orelse true,
         .arm = b.option(bool, "arm", "Enable the arm build") orelse false,
         .x86_64 = b.option(bool, "x86_64", "Enable the x86_64 build") orelse false,
@@ -67,7 +67,7 @@ pub fn build(b: *Builder) void {
         // exe.addIncludeDir("src/oculus/vr-api/Include");
         // exe.linkSystemLibrary("vrapi");
 
-        exe.addLibPath("src/oculus/vr-api/Libs/Android/arm64-v8a/Debug");
+        exe.addLibPath("oculus/vendor-vr-api/Libs/Android/arm64-v8a/Debug");
         exe.linkSystemLibraryName("vrapi");
 
         exe.linkLibC();
