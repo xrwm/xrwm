@@ -1,0 +1,7 @@
+# recommended git config options for this repo.
+# run the following to use them in your cloned repo:
+# 
+# git config --local include.path ../.gitconfig
+
+[alias]
+    ls-subtrees = !"for i in $(git log | grep git-subtree-dir | sed -e 's/^.*: //g' | uniq); do test -d $i && echo $i; done"

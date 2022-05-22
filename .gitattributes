@@ -1,4 +1,1 @@
-src/zig-wlroots/** linguist-vendored
-src/zig-wayland/** linguist-vendored
-src/zig-xkbcommon/** linguist-vendored
-src/zig-pixman/** linguist-vendored
+**vendor-** linguist-vendored
