@@ -74,6 +74,10 @@
             ninja
             expat
             libxml2
+            gnumake
+            autoconf
+            automake
+            libtool
           ];
 
           buildInputs = with pkgs; [

@@ -45,12 +45,26 @@ pub fn init(b: *Builder, user_config: ?UserConfig, versions: ToolchainVersions) 
         const jarsigner = std.fs.path.join(b.allocator, &[_][]const u8{ actual_user_config.java_home, "bin", "jarsigner" ++ exe }) catch unreachable;
         const keytool = std.fs.path.join(b.allocator, &[_][]const u8{ actual_user_config.java_home, "bin", "keytool" ++ exe }) catch unreachable;
 
+        var clang = std.mem.zeroes(SystemTools.Clang);
+        inline for ([_]struct { field: []const u8, prefix: []const u8 } {
+            .{ .field = "aarch64", .prefix = "aarch64-linux-android" },
+            .{ .field = "arm", .prefix = "armv7a-linux-androidabi" },
+            .{ .field = "x86_64", .prefix = "x86_64-linux-android" },
+            .{ .field = "x86", .prefix = "i386-linux-android" } }) |arch| {
+                
+            @field(clang, arch.field) = std.fs.path.join(b.allocator, &[_][]const u8{
+                actual_user_config.android_sdk_root, "ndk", versions.ndk_version, "toolchains", "llvm", "prebuilt", @tagName(builtin.os.tag) ++ "-" ++ @tagName(builtin.cpu.arch), "bin",
+                std.fmt.allocPrint(b.allocator, arch.prefix ++ "{d}-clang" ++ exe, .{ versions.android_sdk_version }) catch unreachable
+            }) catch unreachable;
+        }
+
         break :blk SystemTools{
             .zipalign = zipalign,
             .aapt = aapt,
             .adb = adb,
             .jarsigner = jarsigner,
             .keytool = keytool,
+            .clang = clang,
         };
     };
 
@@ -184,9 +198,6 @@ pub const HostTools = struct {
 
 /// Configuration of the binary paths to all tools that are not included in the android SDK.
 pub const SystemTools = struct {
-    //keytool: []const u8 = "keytool",
-    //adb: []const u8 = "adb",
-    //jarsigner: []const u8 = "/usr/lib/jvm/java-11-openjdk/bin/jarsigner",
     mkdir: []const u8 = "mkdir",
     rm: []const u8 = "rm",
 
@@ -195,6 +206,15 @@ pub const SystemTools = struct {
     adb: []const u8 = "adb",
     jarsigner: []const u8 = "jarsigner",
     keytool: []const u8 = "keytool",
+    
+    clang: Clang = std.mem.zeroes(Clang),
+    
+    pub const Clang = struct {
+        aarch64: []const u8,
+        arm: []const u8,
+        x86_64: []const u8,
+        x86: []const u8,
+    };
 };
 
 /// The configuration which targets a app should be built for.
@@ -766,8 +786,8 @@ const Step = std.build.Step;
 const android_os = .linux;
 const android_abi = .android;
 
-const zig_targets = struct {
-    const aarch64 = std.zig.CrossTarget{
+pub const zig_targets = struct {
+    pub const aarch64 = std.zig.CrossTarget{
         .cpu_arch = .aarch64,
         .os_tag = android_os,
         .abi = android_abi,
@@ -775,7 +795,7 @@ const zig_targets = struct {
         .cpu_features_add = std.Target.aarch64.featureSet(&.{.v8a}),
     };
 
-    const arm = std.zig.CrossTarget{
+    pub const arm = std.zig.CrossTarget{
         .cpu_arch = .arm,
         .os_tag = android_os,
         .abi = android_abi,
@@ -783,14 +803,14 @@ const zig_targets = struct {
         .cpu_features_add = std.Target.arm.featureSet(&.{.v7a}),
     };
 
-    const x86 = std.zig.CrossTarget{
+    pub const x86 = std.zig.CrossTarget{
         .cpu_arch = .i386,
         .os_tag = android_os,
         .abi = android_abi,
         .cpu_model = .baseline,
     };
 
-    const x86_64 = std.zig.CrossTarget{
+    pub const x86_64 = std.zig.CrossTarget{
         .cpu_arch = .x86_64,
         .os_tag = android_os,
         .abi = android_abi,
