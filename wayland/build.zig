@@ -52,6 +52,12 @@ pub const WaylandPackageStep = struct {
                 // .wlroots = wlroots,
             },
         };
+
+        // self.step.dependOn(&self.scan_protocol_step.step);
+        
+        const libffi = LibFFIStep.create(self.builder, self.target, self.compiler);
+        self.step.dependOn(&libffi.step);
+
         return self;
     }
 
@@ -67,13 +73,36 @@ pub const WaylandPackageStep = struct {
     }
     
     pub fn make(step: *std.build.Step) !void {
-        const self = @fieldParentPtr(Self, "step", step);
+        // const self = @fieldParentPtr(Self, "step", step);
         // const allocator = self.builder.allocator;
+        _ = step;
+    }
+};
+
+const CreateDirStep = struct {
+    builder: *std.build.Builder,
+    step: std.build.Step,
+    dir: []const u8,
+
+    const Self = @This();
+
+    pub fn create(builder: *std.build.Builder, dir: []const u8) *Self {
+        const allocator = builder.allocator;
+        const self = allocator.create(Self) catch unreachable;
+
+        self.* = .{
+            .builder = builder,
+            .step = std.build.Step.init(.custom, "Create directory", allocator, make),
+            .dir = dir,
+        };
         
-        self.step.dependOn(&self.scan_protocol_step.step);
-        
-        const libffi = LibFFIStep.create(self.builder, self.target, self.compiler);
-        self.step.dependOn(&libffi.step);
+        return self;
+    }
+
+    pub fn make(step: *std.build.Step) !void {
+        const self = @fieldParentPtr(Self, "step", step);
+
+        try self.builder.makePath(self.dir);
     }
 };
 
@@ -81,51 +110,48 @@ const LibFFIStep = struct {
     builder: *std.build.Builder,
     step: std.build.Step,
     target: std.zig.CrossTarget,
-    compiler: []const u8,
+    compiler: []const u8,    
     
     const Self = @This();
     
     pub fn create(builder: *std.build.Builder, target: std.zig.CrossTarget, compiler: []const u8) *Self {
         const allocator = builder.allocator;
         const self = allocator.create(Self) catch unreachable;
+
+        const src_dir = std.fs.path.join(allocator, &[_][]const u8 {
+            builder.build_root,
+            "wayland",
+            "vendor-libffi"
+        }) catch unreachable;
+
+        const cache_dir = std.fs.path.join(allocator, &[_][]const u8 {
+            builder.build_root,
+            builder.cache_root,
+            "libffi"
+        }) catch unreachable;
+
         self.* = .{
             .builder = builder,
             .step = std.build.Step.init(.custom, "Configure and build libffi", allocator, make),
             .target = target,
             .compiler = compiler,
         };
-        return self;
-    }
-
-    pub fn make(step: *std.build.Step) !void {
-        const self = @fieldParentPtr(Self, "step", step);
-        const allocator = self.builder.allocator;
-
-        const src_dir = std.fs.path.join(allocator, &[_][]const u8 {
-            self.builder.build_root,
-            "wayland",
-            "vendor-libffi"
-        }) catch unreachable;
-
-        const cache_dir = std.fs.path.join(allocator, &[_][]const u8 {
-            self.builder.build_root,
-            self.builder.cache_root,
-            "libffi"
-        }) catch unreachable;
-
+        
         var autoconf = std.build.RunStep.create(self.builder, "autoconf");
         autoconf.cwd = src_dir;
         autoconf.addArg("./autogen.sh");
 
+        const prefix_dir = std.fs.path.join(allocator, &[_][]const u8 { cache_dir, "prefix" }) catch unreachable;
+        var create_prefix_dir = CreateDirStep.create(self.builder, prefix_dir);
         var configure = std.build.RunStep.create(self.builder, "configure");
+        configure.step.dependOn(&create_prefix_dir.step);
         configure.step.dependOn(&autoconf.step);
         configure.cwd = src_dir;
         configure.addArgs(&[_][]const u8 {
             "./configure",
-            std.fmt.allocPrint(allocator, "CC=\"{s}\"", .{ self.compiler }) catch unreachable,
+            std.fmt.allocPrint(allocator, "CC={s}", .{ self.compiler }) catch unreachable,
             std.fmt.allocPrint(allocator, "--host={s}", .{ self.target.linuxTriple(allocator) catch unreachable }) catch unreachable,
-            std.fmt.allocPrint(allocator, "--prefix={s}", .{ std.fs.path.join(allocator, &[_][]const u8 { cache_dir, "prefix" }) catch unreachable }) catch unreachable,
-            std.fmt.allocPrint(allocator, "--exec-prefix={s}", .{ std.fs.path.join(allocator, &[_][]const u8 { cache_dir, "exec-prefix" }) catch unreachable }) catch unreachable,
+            std.fmt.allocPrint(allocator, "--prefix={s}", .{ prefix_dir }) catch unreachable,
         });
 
         var build = std.build.RunStep.create(self.builder, "build");
@@ -134,5 +160,13 @@ const LibFFIStep = struct {
         build.addArgs(&[_][]const u8 { "make", "install" });
         
         self.step.dependOn(&build.step);
+
+        return self;
+    }
+
+    pub fn make(step: *std.build.Step) !void {
+        // const self = @fieldParentPtr(Self, "step", step);
+        // const allocator = self.builder.allocator;
+        _ = step;
     }
 };

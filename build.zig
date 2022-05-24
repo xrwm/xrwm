@@ -16,6 +16,7 @@ pub fn build(builder: *std.build.Builder) void {
         });
         
         var wayland = WaylandPackageStep.createWithCompiler(builder, oculus_target, sdk.system_tools.clang.aarch64);
+        wayland.addSystemProtocol("stable/xdg-shell/xdg-shell.xml");
         step.dependOn(&wayland.step);
         _ = mode;
     }
